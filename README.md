@@ -209,3 +209,11 @@ sudo certbot renew --dry-run
 - `ss -tulpen | grep ':80\|:443\|:3000'` — порты слушаются?
 - `ufw status` — открыты ли 80/443?
 - DNS уже обновился (иногда до 5–30 минут, редко до 24 часов)?
+## Деплой
+
+Можно деплоить как обычный Node.js сервис:
+- Render / Railway / Fly.io / VPS.
+- Команда запуска: `npm start`.
+- Порт берётся из `PORT` (fallback `3000`).
+
+> Важно: это демо с файловой БД. Для production лучше заменить `data/db.json` на PostgreSQL/MySQL и добавить нормальную авторизацию (JWT/sessions).
