@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scholaris — Научная Платформа</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div class="logo">Schol<span>aris</span></div>
+    <div class="header-actions">
+      <div class="user-chip" id="userChip"></div>
+      <button class="btn" onclick="showModal('loginModal')" id="loginBtn">Войти</button>
+      <button class="btn" onclick="showModal('registerModal')" id="registerBtn">Регистрация</button>
+      <button class="btn btn-primary" onclick="showModal('uploadModal')">+ Опубликовать</button>
+    </div>
+  </div>
+  <nav>
+    <a href="#" class="active">Все статьи</a>
+    <a href="#">Физика</a>
+    <a href="#">Биология</a>
+    <a href="#">Химия</a>
+    <a href="#">ИИ и CS</a>
+    <a href="#">Медицина</a>
+    <a href="#">Математика</a>
+    <a href="#">Экономика</a>
+    <a href="#">Избранное</a>
+  </nav>
+</header>
+
+<!-- SEARCH -->
+<div class="search-bar">
+  <input class="search-input" type="text" placeholder="Поиск по заголовку, автору, ключевым словам..." id="searchInput" oninput="filterPapers()">
+  <button class="btn" style="white-space:nowrap" onclick="filterPapers()">Найти</button>
+  <button class="btn" onclick="showModal('uploadModal')" style="white-space:nowrap">Загрузить статью</button>
+</div>
+
+<!-- ADMIN BAR (shown when admin logged in) -->
+<div class="admin-bar" id="adminBar" style="display:none">
+  <span class="admin-bar-label">Админ-панель</span>
+  <span class="admin-bar-sep">·</span>
+  <span>На рассмотрении: <span class="admin-bar-count" id="pendingCount">0</span></span>
+  <span class="admin-bar-sep">·</span>
+  <span class="admin-bar-link" onclick="showModal('modModal')">Открыть модерацию →</span>
+  <span class="admin-bar-exit" onclick="adminLogout()">Выйти из режима админа</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Открытая платформа<br>для <em>научных</em> открытий</h1>
+    <p>Публикуйте, читайте и обсуждайте научные работы. От студенческих исследований до рецензируемых статей — все загружаемые работы проходят редакционную проверку перед публикацией.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="showModal('uploadModal')">Отправить статью</button>
+      <button class="btn" onclick="showToast('Scholaris: загрузка → модерация → публикация. Всё работает без реального backend.')">Узнать больше</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" id="totalCount">0</span><span class="stat-label">Опубликовано</span></div>
+      <div class="stat"><span class="stat-num" id="authorsCount">0</span><span class="stat-label">Авторов</span></div>
+      <div class="stat"><span class="stat-num" id="fieldsCount">0</span><span class="stat-label">Областей</span></div>
+    </div>
+  </div>
+  <div class="hero-cta-block">
+    <div class="review-notice">
+      <strong>📋 Процесс публикации</strong>
+      Статьи проходят редакционную проверку перед публикацией. Обычно это занимает 1–3 рабочих дня.
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="showModal('uploadModal')">+ Отправить статью</button>
+    <button class="btn" style="width:100%" onclick="showAdminLogin()">🔐 Вход для редакторов</button>
+  </div>
+</section>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Область науки</div>
+      <span class="filter-tag active" onclick="filterByTag(this,'')">Все</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Физика')">Физика</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Биология')">Биология</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Химия')">Химия</span>
+      <span class="filter-tag" onclick="filterByTag(this,'ИИ')">ИИ / CS</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Медицина')">Медицина</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Математика')">Математика</span>
+      <span class="filter-tag" onclick="filterByTag(this,'Экономика')">Экономика</span>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Тип публикации</div>
+      <span class="filter-tag active" onclick="filterByType(this,'')">Все</span>
+      <span class="filter-tag" onclick="filterByType(this,'featured')">Редакция</span>
+      <span class="filter-tag" onclick="filterByType(this,'community')">Сообщество</span>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Год</div>
+      <div class="year-filter">
+        <div class="year-item active" onclick="setYearFilter(this,'')"><span>Все годы</span><span class="year-count" id="yearAllCount">0</span></div>
+        <div class="year-item" onclick="setYearFilter(this,'2026')"><span>2026</span><span class="year-count" id="year2026Count">0</span></div>
+        <div class="year-item" onclick="setYearFilter(this,'2025')"><span>2025</span><span class="year-count" id="year2025Count">0</span></div>
+        <div class="year-item" onclick="setYearFilter(this,'2024')"><span>2024</span><span class="year-count" id="year2024Count">0</span></div>
+        <div class="year-item" onclick="setYearFilter(this,'2023')"><span>2023</span><span class="year-count" id="year2023Count">0</span></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Статистика</div>
+      <div style="font-size:13px;color:var(--muted);line-height:2">
+        <div>📥 Загрузок сегодня: <strong style="color:var(--ink)" id="todayUploads">0</strong></div>
+        <div>👁 Просмотров: <strong style="color:var(--ink)" id="totalViews">0</strong></div>
+        <div>✅ На рецензии: <strong style="color:var(--ink)" id="reviewCount">0</strong></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- PAPERS -->
+  <main class="papers-area">
+    <div class="papers-header">
+      <h2>Научные статьи</h2>
+      <div class="sort-controls">
+        <button class="sort-btn active">Новые</button>
+        <button class="sort-btn">Популярные</button>
+        <button class="sort-btn">Цитируемые</button>
+      </div>
+    </div>
+    <div id="papersList"></div>
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">Schol<span>aris</span></div>
+    <p style="margin-top:6px">Открытая платформа научных публикаций</p>
+  </div>
+  <p>© 2026 Scholaris · Все права защищены</p>
+</footer>
+
+<!-- ══ PAPER VIEW MODAL ══ -->
+<div class="modal-overlay" id="paperModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('paperModal')">✕</button>
+    <div class="modal-category" id="mCategory"></div>
+    <h1 class="modal-title" id="mTitle"></h1>
+    <div class="modal-authors" id="mAuthors"></div>
+    <div class="modal-affiliations" id="mAffiliation"></div>
+    <div class="modal-section-title">Аннотация</div>
+    <p class="modal-abstract" id="mAbstract"></p>
+    <div class="modal-meta-grid">
+      <div class="meta-item"><div class="meta-label">Журнал / Конференция</div><div class="meta-value" id="mJournal"></div></div>
+      <div class="meta-item"><div class="meta-label">Год публикации</div><div class="meta-value" id="mYear"></div></div>
+      <div class="meta-item"><div class="meta-label">DOI</div><div class="meta-value" id="mDoi" style="font-family:'IBM Plex Mono',monospace;font-size:13px"></div></div>
+      <div class="meta-item"><div class="meta-label">Ключевые слова</div><div class="meta-value" id="mKeywords"></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="downloadCurrentPaper()">📥 Скачать PDF</button>
+      <button class="btn" onclick="copyCitation()">📋 Скопировать цитату</button>
+      <button class="btn" onclick="sharePaper()">🔗 Поделиться</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ UPLOAD MODAL ══ -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal upload-modal">
+    <button class="modal-close" onclick="closeModal('uploadModal')">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:26px;margin-bottom:6px">Опубликовать статью</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Заполните информацию о вашей научной работе</p>
+
+    <div class="fupload-area" id="dropzone">
+      <div class="fupload-icon">📄</div>
+      <p><strong>Перетащите PDF файл сюда</strong><br>или нажмите для выбора файла<br><small style="color:var(--border)">Макс. размер: 50 МБ</small></p>
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display:none" onchange="handleFileSelect(event)">
+    </div>
+    <div id="fileInfo" style="display:none;background:var(--cream);border:1px solid var(--border);padding:12px 16px;margin-bottom:20px;font-size:13px;font-family:'IBM Plex Mono',monospace;color:var(--success)"></div>
+
+    <div class="upload-form-area">
+      <div class="form-fgroup">
+        <label class="inp-label">Название статьи *</label>
+        <input class="inp" type="text" id="upTitle" placeholder="Полное название вашей работы">
+      </div>
+      <div class="form-fgroup">
+        <label class="inp-label">Авторы *</label>
+        <input class="inp" type="text" id="upAuthors" placeholder="Иванов И.И., Петров П.П.">
+      </div>
+      <div class="form-row" style="margin-bottom:18px">
+        <div>
+          <label class="inp-label">Организация</label>
+          <input class="inp" type="text" id="upAffil" placeholder="МГУ, Москва">
+        </div>
+        <div>
+          <label class="inp-label">Год</label>
+          <input class="inp" type="text" id="upYear" placeholder="2025" value="2025">
+        </div>
+      </div>
+      <div class="form-fgroup">
+        <label class="inp-label">Область науки *</label>
+        <select class="inp" id="upCat">
+          <option value="">Выберите область...</option>
+          <option>Физика и астрофизика</option>
+          <option>Биология и генетика</option>
+          <option>Химия и материалы</option>
+          <option>ИИ и Computer Science</option>
+          <option>Медицина и здоровье</option>
+          <option>Математика</option>
+          <option>Экономика и финансы</option>
+          <option>Другое</option>
+        </select>
+      </div>
+      <div class="form-fgroup">
+        <label class="inp-label">Аннотация *</label>
+        <textarea class="inp" id="upAbstract" rows="4" placeholder="Краткое описание вашего исследования (150–300 слов)..." style="resize:vertical"></textarea>
+      </div>
+      <div class="form-fgroup">
+        <label class="inp-label">Ключевые слова</label>
+        <input class="inp" type="text" id="upKeywords" placeholder="нейронные сети, машинное обучение, трансформеры">
+      </div>
+      <div class="form-fgroup">
+        <label class="inp-label">Журнал / Конференция</label>
+        <input class="inp" type="text" id="upJournal" placeholder="Nature, arXiv, ICML 2025, ...">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+      <button class="btn btn-primary" onclick="submitPaper()" style="flex:1">Отправить на рассмотрение →</button>
+      <button class="btn" onclick="closeModal('uploadModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:26px;margin-bottom:20px">Войти в аккаунт</h2>
+    <div class="form-fgroup">
+      <label class="inp-label">Email</label>
+      <input class="inp" type="email" id="loginEmail" placeholder="researcher@university.edu">
+    </div>
+    <div class="form-fgroup">
+      <label class="inp-label">Пароль</label>
+      <input class="inp" type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginUser()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="loginUser()">Войти</button>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="loginWithGoogleDemo()">Войти через Google (демо)</button>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:26px;margin-bottom:20px">Регистрация</h2>
+    <div class="form-fgroup">
+      <label class="inp-label">Имя</label>
+      <input class="inp" type="text" id="regName" placeholder="Анна Смирнова">
+    </div>
+    <div class="form-fgroup">
+      <label class="inp-label">Email</label>
+      <input class="inp" type="email" id="regEmail" placeholder="anna@university.edu">
+    </div>
+    <div class="form-fgroup">
+      <label class="inp-label">Пароль</label>
+      <input class="inp" type="password" id="regPassword" placeholder="Минимум 6 символов" onkeydown="if(event.key==='Enter')registerUser()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="registerUser()">Создать аккаунт</button>
+  </div>
+</div>
+
+<!-- ══ MODERATION PANEL ══ -->
+<div class="modal-overlay" id="modModal">
+  <div class="modal mod-modal">
+    <button class="modal-close" onclick="closeModal('modModal')">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:26px;margin-bottom:6px">Панель модерации</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;font-family:'IBM Plex Mono',monospace">Управление поступившими статьями</p>
+
+    <div class="mod-tabs">
+      <div class="mod-tab active" onclick="switchModTab('pending',this)">
+        На рассмотрении <span class="badge" id="modPendingBadge">0</span>
+      </div>
+      <div class="mod-tab" onclick="switchModTab('approved',this)">Одобрено</div>
+      <div class="mod-tab" onclick="switchModTab('rejected',this)">Отклонено</div>
+    </div>
+    <div id="modContent"></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN LOGIN ══ -->
+<div class="modal-overlay" id="adminLoginModal">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('adminLoginModal')">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:6px">Вход для редакторов</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Доступ к панели модерации статей</p>
+    <div class="form-fgroup">
+      <label class="inp-label">Логин</label>
+      <input class="inp" type="text" id="adminUser" placeholder="admin">
+    </div>
+    <div class="form-fgroup">
+      <label class="inp-label">Пароль</label>
+      <input class="inp" type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <p style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:16px">
+      Демо: логин <strong>admin</strong> / пароль <strong>admin123</strong>
+    </p>
+    <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Войти в панель</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+
+<script src="/app.js"></script>
+</body>
+</html>
